@@ -13,22 +13,14 @@
     <h2>Ajouter un(e) Argonaute</h2>
     <form class="new-member-form">
       <label for="name">Nom de l&apos;Argonaute</label>
-      <input id="name" name="name" type="text" placeholder="Charalampos" />
-      <button type="submit" @click.prevent="addName()">Envoyer</button>
+      <input id="name" name="name" type="text" placeholder="Charalampos" v-model="newName" :class="{ inputerror : !nameIsValid }" />
+      <button type="submit" :disabled="!nameIsValid" @click.prevent="addName()">Envoyer</button>
     </form>
     
     <!-- Member list -->
     <h2>Membres de l'équipage</h2>
     <section id="member-list">
-      <div class="member-item">Eleftheria</div>
-      <div class="member-item">Gennadios</div>
-      <div class="member-item">Lysimachos</div>
-      <div class="member-item">Eleftheria</div>
-      <div class="member-item">Gennadios</div>
-      <div class="member-item">Lysimachos</div>
-      <div class="member-item">Eleftheria</div>
-      <div class="member-item">Gennadios</div>
-      <div class="member-item">Lysimachos</div>
+      <div class="member-item" v-for="argonaute in argonautes">{{argonaute.name}}</div>
     </section>
   </main>
 
@@ -43,12 +35,48 @@
   export default {
     data(){
       return{
-        showfav: false,
+        argonautes: [],
+        newName: "",
       };
     },
+    mounted(){
+      this.getNames();
+    },
+    computed: {
+      // "!!" convertie en boolean pour tester si champ est rempli
+      nameIsValid(){
+        return !!this.newName
+      },
+    },
     methods:{
+      
+      getNames(){
+        // requête pour affichage des noms
+        const axios = require('axios').default;
+        axios
+        .get("http://localhost:5000/argonautes")
+        .then((response) => {
+          this.argonautes = response.data;
+        })
+        .catch((error) => console.log(error));
+      },
+
       addName(){
-        console.log("coucou");
+        console.log(this.newName);
+        // requête pour affichage des noms
+        const axios = require('axios').default;
+        axios
+        .post("http://localhost:5000/argonautes/newname", {name: this.newName})
+        .then((response) => {
+          console.log("nom ajouté!");
+          this.newName = "";
+          this.getNames();
+        })
+        .catch((error) =>{
+          console.log(error);
+          alert("cette persone est déjà inscrite!");
+          this.newName = "";
+        });
       }
     }
 }
@@ -100,6 +128,49 @@ label {
   margin-bottom: 0.5em;
 }
 
+input{
+  margin: 0 1rem;
+  padding: .4rem .6rem;
+  border-radius: 5px;
+  border: 1px solid black !important;
+
+  &:focus{
+    outline: none;
+  }
+}
+
+button{
+  font-weight: bold;
+  padding: .3rem .6rem;
+  border-radius: 5px;
+  border: 2px solid #ff9f9f !important;
+  color: white;
+  background-color: #f76c6c;
+  transition: all 0.2s ease-in-out;
+
+  &:hover{
+    cursor: pointer;
+    background-color: yellowgreen ;
+    border-color: rgb(183, 248, 52) !important;
+    color: green;
+    transform: scale(1.07);
+  }
+
+  &:disabled{
+    cursor: not-allowed;
+    color: rgb(189, 154, 154);
+    background-color: #f76c6c7c;
+    &:hover{
+      border: 2px solid #ff9f9f !important;
+      transform: scale(1);
+    }
+  }
+}
+
+.inputerror{
+  border: 1px solid rgb(255, 32, 32) !important;
+}
+
 .new-member-form {
   margin: 2em 0 4em 0;
   text-align: center;
@@ -109,12 +180,11 @@ label {
   width: 50%;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   flex-wrap: wrap;
 
   .member-item {
-    padding: 0 2em 1em;
+    width: 33.3%;
+    margin: 1rem 0;
   }
 }
 
